@@ -329,7 +329,7 @@ export default function App() {
       lockedAtTop: expanded && atTop,
     };
 
-    if (!expanded || (expanded && atTop)) {
+    if (!expanded) {
       start(e.touches[0].clientY);
       scrollGesture.current.draggingSheet = true;
     }
@@ -964,7 +964,7 @@ export default function App() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 12,
-                padding: "0 16px",
+                padding: "0 20px",
               }}
             >
               <h2
@@ -1028,7 +1028,7 @@ export default function App() {
               display: "flex",
               alignItems: "center",
               gap: 4,
-              paddingLeft: 16,
+              paddingLeft: 20,
               overflow: "hidden",
               maxHeight: `${Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 40}px`,
               marginTop: `${(1 - Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN)))) * -12}px`,
@@ -1049,17 +1049,17 @@ export default function App() {
                 gap: 8,
                 overflowX: "auto",
                 paddingBottom: 4,
-                paddingLeft: 16,
+                paddingLeft: 20,
                 scrollbarWidth: "none",
                 WebkitOverflowScrolling: "touch",
-                touchAction: "pan-x",
+                touchAction: expanded ? "auto" : "pan-x",
               }}
             >
               <button
                 type="button"
                 style={{
                   height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 16px",
+                  padding: "0 20px",
                   borderRadius: 999,
                   border: "none",
                   background: "#000",
@@ -1088,7 +1088,7 @@ export default function App() {
                 type="button"
                 style={{
                   height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 16px",
+                  padding: "0 20px",
                   borderRadius: 999,
                   border: "none",
                   background: "#ececec",
@@ -1128,7 +1128,7 @@ export default function App() {
                 type="button"
                 style={{
                   height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 16px",
+                  padding: "0 20px",
                   borderRadius: 999,
                   border: "none",
                   background: "#ececec",
@@ -1149,7 +1149,7 @@ export default function App() {
                 type="button"
                 style={{
                   height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 16px",
+                  padding: "0 20px",
                   borderRadius: 999,
                   border: "none",
                   background: "#ececec",
@@ -1170,7 +1170,7 @@ export default function App() {
                 type="button"
                 style={{
                   height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 16px",
+                  padding: "0 20px",
                   borderRadius: 999,
                   border: "none",
                   background: "#ececec",
@@ -1202,7 +1202,7 @@ export default function App() {
                   letterSpacing: "0.04em",
                   color: "#111",
                   textTransform: "uppercase",
-                  paddingLeft: 16,
+                  paddingLeft: 20,
                   overflow: "hidden",
                   maxHeight: `${Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 40}px`,
                   opacity: Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))),
@@ -1221,10 +1221,10 @@ export default function App() {
                   gap: 4,
                   overflowX: "auto",
                   paddingBottom: 4,
-                  paddingLeft: 16,
+                  paddingLeft: 20,
                   scrollbarWidth: "none",
                   WebkitOverflowScrolling: "touch",
-                  touchAction: "pan-x",
+                  touchAction: expanded ? "auto" : "pan-x",
                 }}
               >
                 {colorSwatches.map((swatch) => (
@@ -1274,10 +1274,10 @@ export default function App() {
                   gap: 8,
                   overflowX: "auto",
                   paddingBottom: 4,
-                  paddingLeft: 16,
+                  paddingLeft: 20,
                   scrollbarWidth: "none",
                   WebkitOverflowScrolling: "touch",
-                  touchAction: "pan-x",
+                  touchAction: expanded ? "auto" : "pan-x",
                 }}
               >
                 {["XS", "S", "M", "L", "XL", "2XL", "3XL"].map((size) => {
@@ -1311,7 +1311,7 @@ export default function App() {
 
             
 
-            <div style={{ padding: "0 16px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <div style={{ padding: "0 20px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 600, color: "#000" }}>17,98 €</div>
                 <div style={{ fontSize: 14, fontWeight: 400, color: "#6A6A6A" }}>Plus shipping</div>
@@ -1319,7 +1319,7 @@ export default function App() {
               <div style={{ fontSize: 14, fontWeight: 400, color: "#000" }}>See price details</div>
             </div>
 
-            <div style={{ padding: "0 16px" }}>
+            <div style={{ padding: "0 20px" }}>
               <button
                 type="button"
                 style={{
