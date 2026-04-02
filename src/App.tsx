@@ -867,6 +867,30 @@ export default function App() {
             {slides[index].label.replace(/\s+/g, "").toUpperCase()}
           </div>
         </div>
+
+        <button
+          type="button"
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            width: 56,
+            height: 56,
+            borderRadius: 999,
+            border: "none",
+            background: "linear-gradient(90deg, #DC2626 -0.88%, #4D52D2 49.94%, #16A34A 101.36%)",
+            boxShadow: "0 4px 14px 0 rgba(0, 0, 0, 0.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            zIndex: 3,
+          }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
 
       <div
