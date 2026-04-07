@@ -48,6 +48,7 @@ export default function App() {
   const [showSlideLabel, setShowSlideLabel] = useState(false);
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [atScrollBottom, setAtScrollBottom] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [targetIndex, setTargetIndex] = useState<number | null>(null);
   const [slideDirection, setSlideDirection] = useState<"left" | "right">(
@@ -669,6 +670,7 @@ export default function App() {
           position: "relative",
           overflow: "hidden",
           touchAction: "none",
+          background: "linear-gradient(270deg, #f2f2f2 0%, #e3e3e3 100%)",
           paddingTop: expanded ? HEADER + 10 : 0,
           transition: "padding-top 0.7s cubic-bezier(0.16,1,0.3,1)",
         }}
@@ -945,6 +947,10 @@ export default function App() {
           onTouchStart={onScrollTouchStart}
           onTouchMove={onScrollTouchMove}
           onTouchEnd={onScrollTouchEnd}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setAtScrollBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
+          }}
           style={{
             flex: 1,
             overflowY: expanded ? "auto" : "hidden",
@@ -1319,7 +1325,7 @@ export default function App() {
               <div style={{ fontSize: 14, fontWeight: 400, color: "#000" }}>See price details</div>
             </div>
 
-            <div style={{ padding: "0 20px" }}>
+            <div style={{ padding: "0 20px", position: "sticky", top: 0, background: "#F4F4F4", paddingTop: 12, paddingBottom: 12, zIndex: 2 }}>
               <button
                 type="button"
                 style={{
@@ -1410,6 +1416,9 @@ export default function App() {
             height: 10,
             background: "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.1))",
             pointerEvents: "none",
+            opacity: atScrollBottom ? 0 : 1,
+            transition: "opacity 0.4s ease",
+            zIndex: 1,
           }}
         />
       </div>
