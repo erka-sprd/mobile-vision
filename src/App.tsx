@@ -3,7 +3,7 @@ import { ChevronUp, X } from "lucide-react";
 
 const DEFAULT_COLOR = "softEcru";
 
-const DRAWER_MIN = 130;
+const DRAWER_MIN = 70;
 const HEADER = 56;
 const EDITOR_MIN = 170;
 const THRESHOLD = 10;
@@ -35,7 +35,7 @@ const getSlidesForColor = (key: string) => [
   ...(colorHasCloseup(key) ? [{ label: "Close Up", src: `/img/product-images/${key}-closeup.png` }] : []),
 ];
 
-export default function App() {
+ export default function App() {
   const drawerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +66,75 @@ export default function App() {
 
   const handlePathRef = useRef<SVGPathElement>(null);
   const handleSvgRef = useRef<SVGSVGElement>(null);
+
+  const barScrollRef = useRef<HTMLDivElement>(null);
+  const addDesignBtnRef = useRef<HTMLButtonElement>(null);
+  const [barScrollProgress, setBarScrollProgress] = useState(0);
+  const addDesignExpandedWidth = useRef<number | null>(null);
+  const addDesignCurrentWidth = useRef<number | null>(null);
+  const addDesignAnimRef = useRef<number | null>(null);
+  const isBarCompactRef = useRef(false);
+  const isBarAnimatingRef = useRef(false);
+
+  const COMPACT_WIDTH = 54;
+  const ANIM_DURATION = 500;
+
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  const animateAddDesignWidth = (fromWidth: number, toWidth: number) => {
+    const btn = addDesignBtnRef.current;
+    const scroll = barScrollRef.current;
+    if (!btn || !scroll) return;
+    if (addDesignAnimRef.current !== null) cancelAnimationFrame(addDesignAnimRef.current);
+    isBarAnimatingRef.current = true;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / ANIM_DURATION, 1);
+      const w = fromWidth + (toWidth - fromWidth) * easeOut(t);
+      const paddingW = fromWidth + (toWidth - fromWidth) * easeOut(t);
+      btn.style.width = `${w}px`;
+      addDesignCurrentWidth.current = w;
+      scroll.style.paddingLeft = `${16 + paddingW + 8}px`;
+      if (t < 1) {
+        addDesignAnimRef.current = requestAnimationFrame(tick);
+      } else {
+        addDesignAnimRef.current = null;
+        isBarAnimatingRef.current = false;
+      }
+    };
+    addDesignAnimRef.current = requestAnimationFrame(tick);
+  };
+
+  const handleBarScroll = () => {
+    const el = barScrollRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const progress = max > 0 ? el.scrollLeft / max : 0;
+    setBarScrollProgress(progress);
+    if (isBarAnimatingRef.current) return;
+    const btn = addDesignBtnRef.current;
+    if (!btn) return;
+    const shouldBeCompact = progress > 0;
+    if (shouldBeCompact === isBarCompactRef.current) return;
+    isBarCompactRef.current = shouldBeCompact;
+    if (shouldBeCompact) {
+      addDesignExpandedWidth.current = btn.offsetWidth;
+      animateAddDesignWidth(btn.offsetWidth, COMPACT_WIDTH);
+    } else {
+      const expandedWidth = addDesignExpandedWidth.current ?? btn.offsetWidth;
+      animateAddDesignWidth(addDesignCurrentWidth.current ?? COMPACT_WIDTH, expandedWidth);
+    }
+  };
+
+  useEffect(() => {
+    const btn = addDesignBtnRef.current;
+    const scroll = barScrollRef.current;
+    if (!btn || !scroll) return;
+    const w = btn.offsetWidth;
+    addDesignExpandedWidth.current = w;
+    addDesignCurrentWidth.current = w;
+    scroll.style.paddingLeft = `${16 + w + 8}px`;
+  }, []);
   const chevronState = useRef({ bend: 0, gray: 0.8, scale: 1, rafId: 0 });
   const dragDirection = useRef<"up" | "down" | "none">("none");
 
@@ -600,7 +669,7 @@ export default function App() {
         flexDirection: "column",
         overflow: "hidden",
         fontFamily: '"Inter Variable", sans-serif',
-        background: "linear-gradient(270deg, #f2f2f2 0%, #e3e3e3 100%)",
+        background: "linear-gradient(300deg, #eaeaea 0%, #e3e3e3 100%)",
         overscrollBehavior: "none",
         touchAction: "manipulation",
       }}
@@ -670,7 +739,7 @@ export default function App() {
           position: "relative",
           overflow: "hidden",
           touchAction: "none",
-          background: "linear-gradient(270deg, #f2f2f2 0%, #e3e3e3 100%)",
+          background: "linear-gradient(300deg, #eaeaea 0%, #e3e3e3 100%)",
           paddingTop: expanded ? HEADER + 10 : 0,
           transition: "padding-top 0.7s cubic-bezier(0.16,1,0.3,1)",
         }}
@@ -743,7 +812,7 @@ export default function App() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  top: 10,
+                  top: 0,
                   width: "100%",
                   height: "100%",
                   objectFit: "contain",
@@ -768,131 +837,95 @@ export default function App() {
           })}
         </div>
 
-        <div
-          style={{
-            position: "absolute",
-            bottom: 16,
-            left: 0,
-            right: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 16,
-            pointerEvents: "auto",
-            zIndex: 10,
-          }}
-        >
-          <button
-            type="button"
-            aria-label="Previous slide"
-            onClick={() => goToSlide(index - 1)}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: 28,
-              cursor: "pointer",
-              color: "#000",
-              WebkitTextFillColor: "#000",
-              WebkitAppearance: "none",
-              appearance: "none",
-              padding: 0,
-              lineHeight: 1,
-            }}
-          >
-            ‹
-          </button>
-
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                aria-label={slides[i].label}
-                onClick={() => goToSlide(i)}
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: i === index ? "#fff" : "#000",
-                  border: i === index ? "2px solid #000" : "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  flexShrink: 0,
-                }}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            aria-label="Next slide"
-            onClick={() => goToSlide(index + 1)}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: 28,
-              cursor: "pointer",
-              color: "#000",
-              WebkitTextFillColor: "#000",
-              WebkitAppearance: "none",
-              appearance: "none",
-              padding: 0,
-              lineHeight: 1,
-            }}
-          >
-            ›
-          </button>
-        </div>
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: "flex",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}
-        >
+        {/* Button row — inside editor, overlays t-shirt */}
+        <div id="editor-button-bar" style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}>
+          <div id="editor-button-bar-padding" style={{ paddingTop: 12, paddingBottom: 12 }}>
           <div
+            id="editor-button-bar-scroll"
+            ref={barScrollRef}
+            onScroll={handleBarScroll}
+            onTouchStart={onHorizontalTouchStart}
+            onTouchMove={onHorizontalTouchMove}
+            onTouchEnd={onHorizontalTouchEnd}
             style={{
-              fontSize: 12,
-              color: "#888",
-              letterSpacing: 0.6,
-              textTransform: "uppercase",
-              opacity: showSlideLabel ? 1 : 0,
-              transform: `translateY(${showSlideLabel ? 0 : 4}px)`,
-              transition: "opacity 220ms ease-out, transform 220ms ease-out",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              overflowX: "auto",
+              overflowY: "visible",
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              marginTop: -10,
+              marginBottom: -10,
+              scrollbarWidth: "none",
+              WebkitOverflowScrolling: "touch",
+              touchAction: "pan-x",
             }}
           >
-            {slides[index].label.replace(/\s+/g, "").toUpperCase()}
+          <button type="button" style={{ height: 46, padding: "0 16px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <span>Front</span>
+            <img src="/icons/icon-chevron-down.svg" width={16} height={16} alt="" />
+          </button>
+          <button type="button" style={{ height: 46, padding: "2px 16px 2px 4px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <img src="/img/preview.png" width={38} height={38} alt="" style={{ borderRadius: 999, display: "block" }} />
+            <span>Preview</span>
+          </button>
+          <button type="button" style={{ height: 46, padding: "2px 16px 2px 4px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <img src="/icons/embroidery.png" width={38} height={38} alt="" style={{ borderRadius: 999, display: "block" }} />
+            <span>Embroidery</span>
+            <img src="/icons/icon-chevron-down.svg" width={16} height={16} alt="" />
+          </button>
+          <button type="button" style={{ height: 46, padding: "0 16px 0 4px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 10, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <img src="/icons/products.png" width="auto" height={40} alt="" style={{ marginTop: -2 }} />
+            <span>Change product</span>
+          </button>          
+          <button type="button" style={{ height: 46, padding: "0 16px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <img src="/icons/icon-share.svg" width={18} height={18} alt="" />
+            <span>Share</span>
+          </button>
+          <button type="button" style={{ height: 46, padding: "0 16px", borderRadius: 999, border: "none", background: "#F4F4F4", color: "#000", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600, flexShrink: 0, boxShadow: "0 1px 9px rgba(0,0,0,0.03)" }}>
+            <img src="/icons/icon-heart.svg" width={18} height={18} alt="" />
+            <span>Save</span>
+          </button>
+          <div style={{ width: 4, flexShrink: 0 }} />
           </div>
+          </div>
+          <button
+            id="editor-add-design-btn"
+            ref={addDesignBtnRef}
+            type="button"
+            style={{
+              position: "absolute",
+              left: 16,
+              top: barScrollProgress > 0 ? -62 : 12,
+              height: barScrollProgress > 0 ? 54 : 46,
+              padding: barScrollProgress > 0 ? "0" : "0 18px",
+              borderRadius: 999,
+              border: "none",
+              background: "linear-gradient(90deg, #DC2626 -0.88%, #4D52D2 49.94%, #16A34A 101.36%)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              flexShrink: 0,
+              boxShadow: barScrollProgress > 0 ? "0 4px 16px rgba(0,0,0,0.35)" : "0 4px 14px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+              boxSizing: "border-box",
+              whiteSpace: "nowrap",
+              zIndex: 2,
+              transition: "top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease",
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}><path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
+            <span style={{ opacity: barScrollProgress > 0 ? 0 : 1, transition: "opacity 0.15s ease", ...(barScrollProgress > 0 ? { position: "absolute", left: 38 } : {}) }}>Add</span>
+          </button>
         </div>
 
-        <button
-          type="button"
-          style={{
-            position: "absolute",
-            bottom: 16,
-            right: 16,
-            width: 56,
-            height: 56,
-            borderRadius: 999,
-            border: "none",
-            background: "linear-gradient(90deg, #DC2626 -0.88%, #4D52D2 49.94%, #16A34A 101.36%)",
-            boxShadow: "0 4px 14px 0 rgba(0, 0, 0, 0.25)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            zIndex: 3,
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5V19M5 12H19" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-        </button>
       </div>
 
       <div
@@ -963,16 +996,29 @@ export default function App() {
             overscrollBehaviorY: "contain",
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 2 }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: 12,
                 padding: "0 20px",
+                gap: 0,
               }}
             >
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                overflow: "hidden",
+                flexShrink: 0,
+                maxWidth: `${(1 - Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN)))) * 200}px`,
+                marginRight: `${(1 - Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN)))) * 8}px`,
+                opacity: 1 - Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))),
+                transition: "max-width 0.3s ease, margin-right 0.3s ease, opacity 0.3s ease",
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#000", flexShrink: 0, opacity: 0.7 }}>17,98 €</span>
+                <span style={{ fontSize: 20, color: "#000", flexShrink: 0, opacity: 0.4, lineHeight: 1 }}>·</span>
+              </div>
               <h2
                 style={{
                   margin: 0,
@@ -982,7 +1028,7 @@ export default function App() {
                   fontWeight: 500,
                   letterSpacing: "-0.02em",
                   color: "#000",
-                  opacity: 0.6 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 0.4,
+                  opacity: 0.4 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 0.4,
                   flex: 1,
                   overflow: "hidden",
                   whiteSpace: height <= DRAWER_MIN + 5 ? "nowrap" : "normal",
@@ -1017,6 +1063,7 @@ export default function App() {
                   justifyContent: "center",
                   padding: 0,
                   flexShrink: 0,
+                  marginLeft: 12,
                 }}
               >
                 <span style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1044,156 +1091,6 @@ export default function App() {
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
               <span style={{ fontSize: 14, fontWeight: 500, color: "#6A6A6A", letterSpacing: "-0.01em" }}>4.4 (1506 reviews)</span>
-            </div>
-
-            <div
-              onTouchStart={onHorizontalTouchStart}
-              onTouchMove={onHorizontalTouchMove}
-              onTouchEnd={onHorizontalTouchEnd}
-              style={{
-                display: "flex",
-                gap: 8,
-                overflowX: "auto",
-                paddingBottom: 4,
-                paddingLeft: 20,
-                scrollbarWidth: "none",
-                WebkitOverflowScrolling: "touch",
-                touchAction: expanded ? "auto" : "pan-x",
-              }}
-            >
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 20px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#000",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 12,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  overflow: "hidden",
-                  maxWidth: expanded ? 0 : 200,
-                  opacity: expanded ? 0 : 1,
-                  paddingLeft: expanded ? 0 : 16,
-                  paddingRight: expanded ? 0 : 16,
-                  marginRight: expanded ? -8 : 0,
-                  transition: "max-width 0.5s cubic-bezier(0.32,0.72,0,1) 0.4s, opacity 0.5s cubic-bezier(0.32,0.72,0,1) 0.4s, padding 0.5s cubic-bezier(0.32,0.72,0,1) 0.4s, margin 0.5s cubic-bezier(0.32,0.72,0,1) 0.4s",
-                }}
-              >
-                <img src="/icons/icon-basket.svg" alt="" style={{ width: 20, height: 20, filter: "invert(1)", flexShrink: 0 }} />
-                <span style={{ whiteSpace: "nowrap" }}>17,98 €</span>
-              </button>
-
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 20px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#ececec",
-                  color: "#111",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}
-              >
-                <span>Change product</span>
-              </button>
-
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "2px 16px 2px 2px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#ececec",
-                  color: "#111",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                }}
-              >
-                <img src="/img/preview.png" width={42} height={42} alt="" style={{ borderRadius: 999, display: "block" }} />
-                <span>Preview</span>
-              </button>
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 20px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#ececec",
-                  color: "#111",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Standard print
-                <img src="/icons/icon-chevron-down.svg" alt="" style={{ width: 18, height: 18, filter: "invert(42%)", marginLeft: 4 }} />
-              </button>
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 20px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#ececec",
-                  color: "#111",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <img src="/icons/icon-share.svg" alt="" style={{ width: 20, height: 20, filter: "invert(42%)" }} />
-                <span>Share</span>
-              </button>
-              <button
-                type="button"
-                style={{
-                  height: 42 + Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))) * 4,
-                  padding: "0 20px",
-                  borderRadius: 999,
-                  border: "none",
-                  background: "#ececec",
-                  color: "#111",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  flexShrink: 0,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                }}
-              >
-                <img src="/icons/icon-heart.svg" alt="" style={{ width: 20, height: 20, filter: "invert(42%)" }} />
-                <span>Save</span>
-              </button>
-              <div style={{ width: 6, flexShrink: 0 }} />
             </div>
 
             <div style={{ height: 1, background: "#E5E5E5", opacity: Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN))), maxHeight: `${Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN)))}px`, marginTop: `${(1 - Math.min(1, Math.max(0, (height - DRAWER_MIN) / (maxH - DRAWER_MIN)))) * -12}px` }} />
